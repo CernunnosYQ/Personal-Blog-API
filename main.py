@@ -4,6 +4,15 @@ from core.config import settings
 from app.routes import router_blog, router_project, router_user, router_tag
 
 
+def create_tables():
+    from core.db.base import Base
+    from core.db.session import engine
+
+    from app.models import User, Blogpost, Series, Project, Tag, Tech
+
+    Base.metadata.create_all(bind=engine)
+
+
 def include_router(app):
     app.include_router(router_blog, prefix="/api")
     app.include_router(router_project, prefix="/api")
@@ -13,6 +22,7 @@ def include_router(app):
 
 def start_application():
     app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
+    create_tables()
     include_router(app)
     return app
 

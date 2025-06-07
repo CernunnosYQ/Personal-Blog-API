@@ -1,17 +1,54 @@
 from fastapi import APIRouter, status
+from app.schemas import ResponseBase, TagCreate, TagUpdate, TagShow
 
 router_tag = APIRouter(tags=["tag"])
 
 
-@router_tag.get("/get/tags")
+@router_tag.get("/get/tags", response_model=ResponseBase[list[TagShow]])
 async def get_tags():
-    """Get all tags (for blogposts)"""
+    """Get all tags"""
 
     return {"success": True, "data": []}
 
 
-@router_tag.get("/get/tech-tags")
-async def get_tech_tags():
-    """Get all tech tags (for projects)"""
+@router_tag.post(
+    "/create/tag",
+    response_model=ResponseBase[TagShow],
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_tag(tag: TagCreate):
+    """Create a new tag"""
+
+    return {"success": True, "data": {}}
+
+
+@router_tag.put("/update/tag/{id}", response_model=ResponseBase[TagShow])
+async def update_tag(id: int, tag: TagUpdate):
+    """Update an existing tag"""
+
+    return {"success": True, "data": {}}
+
+
+@router_tag.get("/get/techs", response_model=ResponseBase[list[TagShow]])
+async def get_techs():
+    """Get all tech tags"""
 
     return {"success": True, "data": []}
+
+
+@router_tag.post(
+    "/create/tech",
+    response_model=ResponseBase[TagShow],
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_tag(tech: TagCreate):
+    """Create a new tech tag"""
+
+    return {"success": True, "data": {}}
+
+
+@router_tag.put("/update/tech/{id}", response_model=ResponseBase[TagShow])
+async def update_tag(id: int, tech: TagUpdate):
+    """Update an existing tech tag"""
+
+    return {"success": True, "data": {}}

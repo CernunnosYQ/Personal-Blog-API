@@ -1,7 +1,8 @@
-# Temporal schema for user
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+
+from enums import UserRoles
 
 
 class UserBase(BaseModel):
@@ -9,4 +10,5 @@ class UserBase(BaseModel):
     username: str
     email: str
     password: str
+    role: UserRoles
     is_active: bool

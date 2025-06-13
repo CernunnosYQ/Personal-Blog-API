@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-from enums import Tier
+from app.core.enums import Tier
 from .tag import TagBase
 
 

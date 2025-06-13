@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
-from enums import UserRoles
+from app.core.enums import UserRoles
 
 
 class UserBase(BaseModel):

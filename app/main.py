@@ -1,14 +1,14 @@
 from fastapi import FastAPI
 
-from core.config import settings
-from app.routes import router_blog, router_project, router_user, router_tag
+from .core.config import settings
+from .api import router_blog, router_project, router_user, router_tag
 
 
 def create_tables():
-    from core.db.base import Base
-    from core.db.session import engine
+    from .db.base import Base
+    from .db.session import engine
 
-    from app.models import User, Blogpost, Series, Project, Tag, Tech
+    from .models import User, Blogpost, Series, Project, Tag, Tech
 
     Base.metadata.create_all(bind=engine)
 

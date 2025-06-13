@@ -1,5 +1,5 @@
 from sqlalchemy import Table, Column, Integer, ForeignKey
-from core.db.base import Base
+from app.db.base import Base
 
 blogpost_tags = Table(
     "blogpost_tags",

@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import relationship
-from core.db.base import Base
 from datetime import datetime, timezone
 
-from enums import Tier
+from app.db.base import Base
+from app.core.enums import Tier
 from .association_tables import project_techs
 
 

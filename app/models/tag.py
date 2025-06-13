@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relationship
-from core.db.base import Base
+from app.db.base import Base
 
 from .association_tables import blogpost_tags, project_techs
 

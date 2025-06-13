@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from typing import Generator
 
-from core.config import settings
+from app.core.config import settings
 
 
 DB_URL = settings.DB_URL

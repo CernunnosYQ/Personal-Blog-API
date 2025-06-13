@@ -4,13 +4,13 @@ from .core.config import settings
 from .api import router_blog, router_project, router_user, router_tag
 
 
-def create_tables():
-    from .db.base import Base
-    from .db.session import engine
+# def create_tables():
+#     from .db.base import Base
+#     from .db.session import engine
 
-    from .models import User, Blogpost, Series, Project, Tag, Tech
+#     from .models import User, Blogpost, Series, Project, Tag, Tech
 
-    Base.metadata.create_all(bind=engine)
+#     Base.metadata.create_all(bind=engine)
 
 
 def include_router(app):
@@ -22,7 +22,7 @@ def include_router(app):
 
 def start_application():
     app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
-    create_tables()
+    # create_tables()
     include_router(app)
     return app
 

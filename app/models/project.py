@@ -26,7 +26,7 @@ class Project(Base):
     is_active = Column(Boolean, default=True)
 
     author = relationship("User", back_populates="projects")
-    blogposts = relationship("Blogpost", back_populates="project", uselist=False)
+    blogpost = relationship("Blogpost", back_populates="project", uselist=False)
 
     def __repr__(self):
         return (

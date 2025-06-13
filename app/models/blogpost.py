@@ -27,7 +27,6 @@ class Blogpost(Base):
     banner = Column(String, nullable=True)
     content = Column(String, nullable=False)
     preview = Column(String, nullable=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     series_id = Column(Integer, ForeignKey("series.id"), nullable=True)
     part_number = Column(Integer, nullable=True)
@@ -35,7 +34,7 @@ class Blogpost(Base):
 
     author = relationship("User", back_populates="blogposts")
     tags = relationship("Tag", secondary=blogpost_tags, back_populates="blogposts")
-    project = relationship("Project", back_populates="blogpost", uselist=False)
+    project = relationship("Project", back_populates="blogpost")
     series = relationship("Series", back_populates="blogposts")
 
     def __repr__(self):

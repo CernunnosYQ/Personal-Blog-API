@@ -16,6 +16,7 @@ class UserBase(BaseModel):
 class UserShow(BaseModel):
     """Schema for showing user details"""
 
+    id: int
     username: str
     email: str
     is_active: bool

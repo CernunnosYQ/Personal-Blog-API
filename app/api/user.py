@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -9,7 +9,13 @@ from app.schemas import (
     UserUpdate,
     UserPasswordUpdate,
 )
-from app.crud import crud_get_user, crud_create_user
+from app.crud import (
+    crud_get_user,
+    crud_create_user,
+    crud_update_user,
+    crud_update_user_password,
+    crud_delete_user,
+)
 
 
 router_user = APIRouter(tags=["user"])
@@ -20,11 +26,10 @@ async def get_user(user_id, db: Session = Depends(get_db)):
     """Get an user by id or username"""
 
     if not user_id:
-        return {
-            "success": False,
-            "message": "User ID or username is required",
-            "data": None,
-        }
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User ID or username is required",
+        )
 
     if user_id.isdigit():
         user = crud_get_user(id=int(user_id), db=db)
@@ -42,20 +47,56 @@ async def get_user(user_id, db: Session = Depends(get_db)):
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """Create a new user"""
 
+    if user.password != user.password2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passwords do not match",
+        )
+
     user_data = user.model_dump(exclude={"password2"})
 
-    new_user = crud_create_user(user_data=user_data, db=db)
-    if not new_user:
-        return {"success": False, "message": "User creation failed", "data": None}
+    try:
+        new_user = crud_create_user(user_data=user_data, db=db)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while creating the user",
+        )
 
     return {"success": True, "message": "User created", "data": new_user}
 
 
 @router_user.put("/update/user/{id}", response_model=ResponseBase[UserShow])
-async def update_user(id: int, user: UserUpdate):
+async def update_user(id: int, user: UserUpdate, db: Session = Depends(get_db)):
     """Update an existing user"""
 
-    return {"success": True, "message": "User updated", "data": {}}
+    if not id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User ID is required",
+        )
+
+    user = user.model_dump(exclude_unset=True)
+
+    try:
+        updated_user = crud_update_user(id=id, user_data=user, db=db)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while updating the user",
+        )
+
+    return {"success": True, "message": "User updated", "data": updated_user}
 
 
 @router_user.put(
@@ -63,15 +104,70 @@ async def update_user(id: int, user: UserUpdate):
     status_code=status.HTTP_200_OK,
     response_model=ResponseBase[None],
 )
-async def update_password(id: int, user_password: UserPasswordUpdate):
+async def update_password(
+    id: int, user_password: UserPasswordUpdate, db: Session = Depends(get_db)
+):
     """Update an existing user's password"""
 
-    return {"success": True, "message": "Password updated", "data": {}}
+    if not id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User ID is required",
+        )
+
+    if (
+        user_password.new_password
+        and user_password.new_password != user_password.new_password2
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passwords do not match",
+        )
+
+    try:
+        response = crud_update_user_password(
+            id=id,
+            password_data=user_password.model_dump(exclude={"new_password2"}),
+            db=db,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while updating the password" + str(e),
+        )
+
+    return {"success": True, "message": response["message"], "data": None}
 
 
 @router_user.delete(
     "/delete/user/{id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
 )
-async def delete_user(id: int):
+async def delete_user(id: int, db: Session = Depends(get_db)):
     """Delete a user"""
+
+    if not id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User ID is required",
+        )
+
+    try:
+        response = crud_delete_user(id=id, db=db)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while deleting the user",
+        )
+
+    return {"success": True, "message": response["message"], "data": None}

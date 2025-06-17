@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, model_validator, constr
+from typing import Optional, Annotated
 
 from app.core.enums import UserRoles
 
@@ -27,9 +27,22 @@ class UserCreate(BaseModel):
 
     username: str
     email: str
-    password: str
+    password: Annotated[
+        str,
+        constr(
+            min_length=8,
+            strip_whitespace=True,
+            pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$",
+        ),
+    ]
     password2: str
     is_active: bool = True
+
+    @model_validator(mode="after")
+    def validate_passwords(self):
+        if self.password != self.password2:
+            raise ValueError("Passwords do not match")
+        return self
 
 
 class UserUpdate(BaseModel):
@@ -44,6 +57,16 @@ class UserUpdate(BaseModel):
 class UserPasswordUpdate(BaseModel):
     """Schema for updating a user's password"""
 
-    new_password: str
+    new_password: Annotated[
+        str,
+        constr(
+            min_length=8, pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$"
+        ),
+    ]
     new_password2: str
     old_password: str
+
+    @model_validator(mode="after")
+    def validate_passwords(self):
+        if self.new_password != self.new_password2:
+            raise ValueError("Passwords do not match")

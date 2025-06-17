@@ -47,12 +47,6 @@ async def get_user(user_id, db: Session = Depends(get_db)):
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """Create a new user"""
 
-    if user.password != user.password2:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Passwords do not match",
-        )
-
     user_data = user.model_dump(exclude={"password2"})
 
     try:
@@ -113,15 +107,6 @@ async def update_password(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User ID is required",
-        )
-
-    if (
-        user_password.new_password
-        and user_password.new_password != user_password.new_password2
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Passwords do not match",
         )
 
     try:

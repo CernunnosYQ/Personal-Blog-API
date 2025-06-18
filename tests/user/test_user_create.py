@@ -1,7 +1,8 @@
 import pytest
 
 from fastapi import status
-from conftest import client
+from unittest.mock import patch
+
 
 user_example = {
     "username": "testuser",
@@ -73,3 +74,21 @@ def test_create_user_already_exists(client, db_session):
 
     response = client.post("/api/create/user/", json=user_data)
     assert response.status_code == 400, "Expected error for user already exists"
+
+
+def test_create_user_raises_500(client):
+    user_data = {
+        "username": user_example["username"],
+        "email": user_example["email"],
+        "password": user_example["secure_password"],
+        "password2": user_example["secure_password"],
+        "is_active": user_example["is_active"],
+    }
+
+    with patch("app.api.user.crud_create_user") as mock_crud:
+        mock_crud.side_effect = Exception("Unexpected error")
+
+        response = client.post("/api/create/user", json=user_data)
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "An error occurred while creating the user"}

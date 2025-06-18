@@ -73,3 +73,18 @@ def client(app: FastAPI, db_session: Session) -> Generator[TestClient, Any, None
     app.dependency_overrides[get_db] = get_test_db
     with TestClient(app) as client:
         yield client
+
+
+@pytest.fixture(scope="function")
+def test_user(db_session):
+    user_data = {
+        "username": "testuser",
+        "email": "test@gmail.com",
+        "password": "SecurePassword123",
+        "is_active": True,
+    }
+
+    from app.crud import crud_create_user
+
+    user = crud_create_user(user_data, db=db_session)
+    return user

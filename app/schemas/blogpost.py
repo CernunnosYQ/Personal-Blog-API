@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -14,11 +14,12 @@ class BlogpostBase(BaseModel):
     content: str
     preview: str
     author_id: int
-    project_id: Optional[int]
     created_at: datetime
     series_id: Optional[int]
     part_number: Optional[int]
     is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BlogpostShow(BlogpostBase):
@@ -36,7 +37,6 @@ class BlogpostCreate(BaseModel):
     banner: str
     content: str
     preview: str
-    project_id: Optional[int] = None
     series_id: Optional[int] = None
     part_number: Optional[int] = None
     is_active: bool = True
@@ -52,7 +52,6 @@ class BlogpostUpdate(BaseModel):
     content: Optional[str] = None
     preview: Optional[str] = None
     author_id: Optional[int] = None
-    project_id: Optional[int] = None
     series_id: Optional[int] = None
     part_number: Optional[int] = None
     is_active: Optional[bool] = None

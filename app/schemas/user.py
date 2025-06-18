@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator, constr
+from pydantic import BaseModel, model_validator, constr, ConfigDict
 from typing import Optional, Annotated
 
 from app.core.enums import UserRoles
@@ -20,6 +20,8 @@ class UserShow(BaseModel):
     username: str
     email: str
     is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserCreate(BaseModel):

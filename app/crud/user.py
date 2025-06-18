@@ -7,8 +7,6 @@ from app.schemas import UserCreate, UserUpdate, UserPasswordUpdate
 def crud_get_user(id: int = None, username: str = None, db: Session = None):
     """Fetch a single user by ID or username."""
 
-    if not db:
-        raise ValueError("Database session is required.")
     if not (id or username):
         raise ValueError("Either id or username must be provided.")
     if id is not None:
@@ -19,9 +17,6 @@ def crud_get_user(id: int = None, username: str = None, db: Session = None):
 
 def crud_create_user(user_data: dict, db: Session = None):
     """Create a new user in the database."""
-
-    if not db:
-        raise ValueError("Database session is required.")
 
     if crud_get_user(username=user_data.get("username"), db=db):
         raise ValueError("Username already exists.")
@@ -35,9 +30,6 @@ def crud_create_user(user_data: dict, db: Session = None):
 
 def crud_update_user(id: int, user_data: dict, db: Session = None):
     """Update an existing user in the database."""
-
-    if not db:
-        raise ValueError("Database session is required.")
 
     user = crud_get_user(id=id, db=db)
     if not user:
@@ -53,9 +45,6 @@ def crud_update_user(id: int, user_data: dict, db: Session = None):
 
 def crud_update_user_password(id: int, password_data: dict, db: Session = None):
     """Update the password of an existing user in the database."""
-
-    if not db:
-        raise ValueError("Database session is required.")
 
     user = crud_get_user(id=id, db=db)
     if not user:
@@ -74,9 +63,6 @@ def crud_update_user_password(id: int, password_data: dict, db: Session = None):
 
 def crud_delete_user(id: int, db: Session = None):
     """Delete a user from the database."""
-
-    if not db:
-        raise ValueError("Database session is required.")
 
     user = crud_get_user(id=id, db=db)
     if not user:

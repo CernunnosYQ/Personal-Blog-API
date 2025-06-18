@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 
@@ -7,6 +7,8 @@ class TagBase(BaseModel):
     name: str
     icon: str
     description: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TagShow(TagBase):

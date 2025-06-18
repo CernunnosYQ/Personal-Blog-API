@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from app.core.exceptions import NotFoundError
 from app.models import User
 
 from app.schemas import UserCreate, UserUpdate, UserPasswordUpdate
@@ -7,12 +8,12 @@ from app.schemas import UserCreate, UserUpdate, UserPasswordUpdate
 def crud_get_user(id: int = None, username: str = None, db: Session = None):
     """Fetch a single user by ID or username."""
 
-    if not (id or username):
-        raise ValueError("Either id or username must be provided.")
     if id is not None:
         return db.query(User).filter_by(id=id).first()
     if username is not None:
         return db.query(User).filter_by(username=username).first()
+
+    raise ValueError("Either id or username must be provided.")
 
 
 def crud_create_user(user_data: dict, db: Session = None):
@@ -33,7 +34,7 @@ def crud_update_user(id: int, user_data: dict, db: Session = None):
 
     user = crud_get_user(id=id, db=db)
     if not user:
-        raise ValueError("User not found.")
+        raise NotFoundError("User not found.")
 
     for key, value in user_data.items():
         setattr(user, key, value)
@@ -66,7 +67,7 @@ def crud_delete_user(id: int, db: Session = None):
 
     user = crud_get_user(id=id, db=db)
     if not user:
-        raise ValueError("User not found.")
+        raise NotFoundError("User not found.")
 
     db.delete(user)
     db.commit()

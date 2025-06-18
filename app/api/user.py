@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
+import re
 
+from app.core.exceptions import NotFoundError
 from app.db.session import get_db
 from app.schemas import (
     ResponseBase,
@@ -17,7 +19,7 @@ from app.crud import (
     crud_delete_user,
 )
 
-
+username_pattern = r"^[a-zA-Z0-9_]{3,20}$"
 router_user = APIRouter(tags=["user"])
 
 
@@ -25,16 +27,21 @@ router_user = APIRouter(tags=["user"])
 async def get_user(user_id, db: Session = Depends(get_db)):
     """Get an user by id or username"""
 
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User ID or username is required",
-        )
-
     if user_id.isdigit():
         user = crud_get_user(id=int(user_id), db=db)
     else:
+        if not re.fullmatch(username_pattern, user_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid username format",
+            )
         user = crud_get_user(username=user_id, db=db)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
 
     return {"success": True, "message": "User found", "data": user}
 
@@ -66,22 +73,16 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router_user.put("/update/user/{id}", response_model=ResponseBase[UserShow])
-async def update_user(id: int, user: UserUpdate, db: Session = Depends(get_db)):
+async def update_user(id, user: UserUpdate, db: Session = Depends(get_db)):
     """Update an existing user"""
-
-    if not id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User ID is required",
-        )
 
     user = user.model_dump(exclude_unset=True)
 
     try:
         updated_user = crud_update_user(id=id, user_data=user, db=db)
-    except ValueError as e:
+    except NotFoundError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except Exception as e:
@@ -102,12 +103,6 @@ async def update_password(
     id: int, user_password: UserPasswordUpdate, db: Session = Depends(get_db)
 ):
     """Update an existing user's password"""
-
-    if not id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User ID is required",
-        )
 
     try:
         response = crud_update_user_password(
@@ -136,17 +131,11 @@ async def update_password(
 async def delete_user(id: int, db: Session = Depends(get_db)):
     """Delete a user"""
 
-    if not id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User ID is required",
-        )
-
     try:
         response = crud_delete_user(id=id, db=db)
-    except ValueError as e:
+    except NotFoundError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except Exception as e:

@@ -13,7 +13,7 @@ user_example = {
 }
 
 
-def test_create_user_success(client, db_session):
+def test_create_user_success(client):
     user_data = {
         "username": user_example["username"],
         "email": user_example["email"],
@@ -34,7 +34,7 @@ def test_create_user_success(client, db_session):
     assert "id" in data, "Response should contain user ID"
 
 
-def test_create_user_missing_fields(client, db_session):
+def test_create_user_missing_fields(client):
     user_data = {
         "username": user_example["username"],
         "password": user_example["secure_password"],
@@ -46,7 +46,7 @@ def test_create_user_missing_fields(client, db_session):
     assert response.status_code == 422, "Expected validation error for missing fields"
 
 
-def test_create_user_password_missmatch(client, db_session):
+def test_create_user_password_missmatch(client):
     user_data = {
         "username": user_example["username"],
         "email": user_example["email"],
@@ -61,7 +61,7 @@ def test_create_user_password_missmatch(client, db_session):
     ), "Expected validation error for password mismatch"
 
 
-def test_create_user_already_exists(client, db_session):
+def test_create_user_already_exists(client):
     user_data = {
         "username": user_example["username"],
         "email": user_example["email"],
@@ -73,7 +73,7 @@ def test_create_user_already_exists(client, db_session):
     client.post("/api/create/user/", json=user_data)
 
     response = client.post("/api/create/user/", json=user_data)
-    assert response.status_code == 400, "Expected error for user already exists"
+    assert response.status_code == 409, "Expected 409 Conflict for user already exists"
 
 
 def test_create_user_raises_500(client):

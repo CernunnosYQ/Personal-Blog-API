@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Path
 from sqlalchemy.orm import Session
-import re
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, ConflictError
 from app.db.session import get_db
 from app.schemas import (
     ResponseBase,
@@ -19,22 +18,18 @@ from app.crud import (
     crud_delete_user,
 )
 
-username_pattern = r"^[a-zA-Z0-9_]{3,20}$"
 router_user = APIRouter(tags=["user"])
 
 
 @router_user.get("/get/user/{user_id}", response_model=ResponseBase[UserShow])
-async def get_user(user_id, db: Session = Depends(get_db)):
+async def get_user(
+    user_id=Path(..., pattern=r"^[a-zA-Z0-9_]+$"), db: Session = Depends(get_db)
+):
     """Get an user by id or username"""
 
     if user_id.isdigit():
         user = crud_get_user(id=int(user_id), db=db)
     else:
-        if not re.fullmatch(username_pattern, user_id):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid username format",
-            )
         user = crud_get_user(username=user_id, db=db)
 
     if not user:
@@ -58,9 +53,9 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
     try:
         new_user = crud_create_user(user_data=user_data, db=db)
-    except ValueError as e:
+    except ConflictError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail=str(e),
         )
     except Exception as e:
@@ -110,9 +105,9 @@ async def update_password(
             password_data=user_password.model_dump(exclude={"new_password2"}),
             db=db,
         )
-    except ValueError as e:
+    except NotFoundError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except Exception as e:

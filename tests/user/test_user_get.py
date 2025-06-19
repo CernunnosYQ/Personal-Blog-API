@@ -11,7 +11,7 @@ def test_crud_get_user_raises_value_error_if_not_user_or_id(db_session):
         crud_get_user(db=db_session)
 
 
-def test_get_user_success(client, db_session, test_user):
+def test_get_user_success(client, test_user):
     """Test retrieving a user by username and ID."""
 
     username = test_user.username
@@ -36,7 +36,7 @@ def test_get_user_success(client, db_session, test_user):
     assert data["email"] == test_user.email, "Email should match the created user"
 
 
-def test_get_user_not_found(client, db_session):
+def test_get_user_not_found(client):
     """Test retrieving a user that does not exist."""
 
     response = client.get("/api/get/user/nonexistentuser")
@@ -50,7 +50,7 @@ def test_get_user_not_found(client, db_session):
     ), "Expected 404 for non-existent user ID"
 
 
-def test_get_user_invalid_username(client, db_session):
+def test_get_user_invalid_username(client):
     """Test retrieving a user without providing an ID or username."""
 
     response = client.get("/api/get/user/")
@@ -60,8 +60,8 @@ def test_get_user_invalid_username(client, db_session):
 
     response = client.get("/api/get/user/invaliduser!#")
     assert (
-        response.status_code == status.HTTP_400_BAD_REQUEST
-    ), "Expected 400 for invalid user ID or username format"
+        response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    ), "Expected 422 for invalid user ID or username format"
     assert (
         "detail" in response.json()
     ), "Response should contain validation error details"

@@ -12,7 +12,7 @@ new_data = {
 new_password = "UpdatedPassword123"
 
 
-def test_user_update_success(client, db_session, test_user):
+def test_user_update_success(client, test_user):
     """Test updating a user's information successfully."""
 
     user_id = test_user.id
@@ -24,7 +24,7 @@ def test_user_update_success(client, db_session, test_user):
     assert response_data.get("email") == new_data["email"]
 
 
-def test_user_update_not_found(client, db_session):
+def test_user_update_not_found(client):
     """Test updating a user that does not exist."""
 
     response = client.put("/api/get/user/")

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, ConflictError
 from app.models import User
 
 from app.schemas import UserCreate, UserUpdate, UserPasswordUpdate
@@ -20,7 +20,7 @@ def crud_create_user(user_data: dict, db: Session = None):
     """Create a new user in the database."""
 
     if crud_get_user(username=user_data.get("username"), db=db):
-        raise ValueError("Username already exists.")
+        raise ConflictError("Username already exists.")
 
     new_user = User(**user_data)
     db.add(new_user)
@@ -49,7 +49,7 @@ def crud_update_user_password(id: int, password_data: dict, db: Session = None):
 
     user = crud_get_user(id=id, db=db)
     if not user:
-        raise ValueError("User not found.")
+        raise NotFoundError("User not found.")
 
     if user.password != password_data.get("old_password"):
         raise PermissionError("Old password is incorrect.")

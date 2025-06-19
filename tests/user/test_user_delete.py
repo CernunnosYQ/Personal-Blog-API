@@ -4,7 +4,7 @@ from fastapi import status
 from unittest.mock import patch
 
 
-def test_user_delete_success(client, db_session, test_user):
+def test_user_delete_success(client, test_user):
     """Test deleting a user successfully."""
 
     user_id = test_user.id
@@ -25,7 +25,7 @@ def test_user_delete_success(client, db_session, test_user):
     ), "Expected 404 for deleted user"
 
 
-def test_user_delete_not_found(client, db_session):
+def test_user_delete_not_found(client):
     """Test deleting a user that does not exist."""
 
     response = client.delete("/api/delete/user/9999")

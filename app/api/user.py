@@ -1,21 +1,21 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import NotFoundError, ConflictError
+from app.core.exceptions import ConflictError, NotFoundError
+from app.crud import (
+    crud_create_user,
+    crud_delete_user,
+    crud_get_user,
+    crud_update_user,
+    crud_update_user_password,
+)
 from app.db.session import get_db
 from app.schemas import (
     ResponseBase,
-    UserShow,
     UserCreate,
-    UserUpdate,
     UserPasswordUpdate,
-)
-from app.crud import (
-    crud_get_user,
-    crud_create_user,
-    crud_update_user,
-    crud_update_user_password,
-    crud_delete_user,
+    UserShow,
+    UserUpdate,
 )
 
 router_user = APIRouter(tags=["user"])
@@ -23,8 +23,8 @@ router_user = APIRouter(tags=["user"])
 
 @router_user.get("/get/user/{user_id}", response_model=ResponseBase[UserShow])
 async def get_user(
-    user_id=Path(..., pattern=r"^[a-zA-Z0-9_]+$"), db: Session = Depends(get_db)
-):
+    user_id: str = Path(..., pattern=r"^[a-zA-Z0-9_]+$"), db: Session = Depends(get_db)
+) -> dict:
     """Get an user by id or username"""
 
     if user_id.isdigit():
@@ -46,7 +46,7 @@ async def get_user(
     status_code=status.HTTP_201_CREATED,
     response_model=ResponseBase[UserShow],
 )
-async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+async def create_user(user: UserCreate, db: Session = Depends(get_db)) -> dict:
     """Create a new user"""
 
     user_data = user.model_dump(exclude={"password2"})
@@ -58,7 +58,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_409_CONFLICT,
             detail=str(e),
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while creating the user",
@@ -68,7 +68,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router_user.put("/update/user/{id}", response_model=ResponseBase[UserShow])
-async def update_user(id, user: UserUpdate, db: Session = Depends(get_db)):
+async def update_user(id: int, user: UserUpdate, db: Session = Depends(get_db)) -> dict:
     """Update an existing user"""
 
     user = user.model_dump(exclude_unset=True)
@@ -80,7 +80,7 @@ async def update_user(id, user: UserUpdate, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while updating the user",
@@ -96,7 +96,7 @@ async def update_user(id, user: UserUpdate, db: Session = Depends(get_db)):
 )
 async def update_password(
     id: int, user_password: UserPasswordUpdate, db: Session = Depends(get_db)
-):
+) -> dict:
     """Update an existing user's password"""
 
     try:
@@ -123,7 +123,7 @@ async def update_password(
     "/delete/user/{id}",
     status_code=status.HTTP_200_OK,
 )
-async def delete_user(id: int, db: Session = Depends(get_db)):
+async def delete_user(id: int, db: Session = Depends(get_db)) -> dict:
     """Delete a user"""
 
     try:
@@ -133,7 +133,7 @@ async def delete_user(id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while deleting the user",

@@ -1,17 +1,22 @@
 import pytest
-
 from fastapi import status
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
 from app.crud import crud_get_user
+from app.models import User
 
 
-def test_crud_get_user_raises_value_error_if_not_user_or_id(db_session):
+def test_crud_get_user_raises_value_error_if_not_user_or_id(
+    db_session: Session,
+) -> None:
     """Test creating a user with missing id."""
 
     with pytest.raises(ValueError, match="Either id or username must be provided."):
         crud_get_user(db=db_session)
 
 
-def test_get_user_success(client, test_user):
+def test_get_user_success(client: TestClient, test_user: User) -> None:
     """Test retrieving a user by username and ID."""
 
     username = test_user.username
@@ -36,7 +41,7 @@ def test_get_user_success(client, test_user):
     assert data["email"] == test_user.email, "Email should match the created user"
 
 
-def test_get_user_not_found(client):
+def test_get_user_not_found(client: TestClient) -> None:
     """Test retrieving a user that does not exist."""
 
     response = client.get("/api/get/user/nonexistentuser")
@@ -50,7 +55,7 @@ def test_get_user_not_found(client):
     ), "Expected 404 for non-existent user ID"
 
 
-def test_get_user_invalid_username(client):
+def test_get_user_invalid_username(client: TestClient) -> None:
     """Test retrieving a user without providing an ID or username."""
 
     response = client.get("/api/get/user/")

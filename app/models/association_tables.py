@@ -1,4 +1,5 @@
-from sqlalchemy import Table, Column, Integer, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer, Table
+
 from app.db.base import Base
 
 blogpost_tags = Table(

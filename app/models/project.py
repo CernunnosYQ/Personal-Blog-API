@@ -1,9 +1,11 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, ForeignKey
-from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 
-from app.db.base import Base
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+
 from app.core.enums import Tier
+from app.db.base import Base
+
 from .association_tables import project_techs
 
 
@@ -28,7 +30,7 @@ class Project(Base):
     author = relationship("User", back_populates="projects")
     blogpost = relationship("Blogpost", back_populates="project", uselist=False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<Project(id={self.id}, title={self.title}, author_id={self.author_id})>"
         )

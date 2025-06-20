@@ -7,10 +7,10 @@ class UserRoles(Enum):
     USER = "user"
     GUEST = "guest"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def is_admin(self):
+    def is_admin(self) -> bool:
         return self in (UserRoles.OWNER, UserRoles.ADMIN)
 
 
@@ -21,9 +21,9 @@ class Tier(Enum):
     C = "C"
     D = "D"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     @classmethod
-    def allowed_tiers(cls):
+    def allowed_tiers(cls) -> set[str]:
         return {tier.value for tier in cls}

@@ -1,7 +1,9 @@
-import pytest
+from unittest.mock import patch
 
 from fastapi import status
-from unittest.mock import patch
+from fastapi.testclient import TestClient
+
+from app.models import User
 
 new_data = {
     "username": "updateduser",
@@ -12,7 +14,7 @@ new_data = {
 new_password = "UpdatedPassword123"
 
 
-def test_user_update_success(client, test_user):
+def test_user_update_success(client: TestClient, test_user: User) -> None:
     """Test updating a user's information successfully."""
 
     user_id = test_user.id
@@ -24,7 +26,7 @@ def test_user_update_success(client, test_user):
     assert response_data.get("email") == new_data["email"]
 
 
-def test_user_update_not_found(client):
+def test_user_update_not_found(client: TestClient) -> None:
     """Test updating a user that does not exist."""
 
     response = client.put("/api/get/user/")
@@ -38,7 +40,7 @@ def test_user_update_not_found(client):
     ), "Expected 404 for non-existent user"
 
 
-def test_update_user_raises_500(client, test_user):
+def test_update_user_raises_500(client: TestClient, test_user: User) -> None:
     """Test that an unexpected error raises a 500 status code."""
 
     user_id = test_user.id

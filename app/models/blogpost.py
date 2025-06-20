@@ -1,8 +1,10 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+
 from app.db.base import Base
+
 from .association_tables import blogpost_tags
 
 
@@ -37,7 +39,7 @@ class Blogpost(Base):
     project = relationship("Project", back_populates="blogpost")
     series = relationship("Series", back_populates="blogposts")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<Blogpost(id={self.id}, title={self.title}, author_id={self.author_id}, "
             f"slug={self.slug}, created_at={self.created_at})>"

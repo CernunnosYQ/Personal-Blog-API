@@ -1,8 +1,6 @@
-import pytest
-
-from fastapi import status
 from unittest.mock import patch
 
+from fastapi import status, testclient
 
 user_example = {
     "username": "testuser",
@@ -13,7 +11,7 @@ user_example = {
 }
 
 
-def test_create_user_success(client):
+def test_create_user_success(client: testclient) -> None:
     user_data = {
         "username": user_example["username"],
         "email": user_example["email"],
@@ -34,7 +32,7 @@ def test_create_user_success(client):
     assert "id" in data, "Response should contain user ID"
 
 
-def test_create_user_missing_fields(client):
+def test_create_user_missing_fields(client: testclient) -> None:
     user_data = {
         "username": user_example["username"],
         "password": user_example["secure_password"],
@@ -46,7 +44,7 @@ def test_create_user_missing_fields(client):
     assert response.status_code == 422, "Expected validation error for missing fields"
 
 
-def test_create_user_password_missmatch(client):
+def test_create_user_password_missmatch(client: testclient) -> None:
     user_data = {
         "username": user_example["username"],
         "email": user_example["email"],
@@ -61,7 +59,7 @@ def test_create_user_password_missmatch(client):
     ), "Expected validation error for password mismatch"
 
 
-def test_create_user_already_exists(client):
+def test_create_user_already_exists(client: testclient) -> None:
     user_data = {
         "username": user_example["username"],
         "email": user_example["email"],
@@ -76,7 +74,7 @@ def test_create_user_already_exists(client):
     assert response.status_code == 409, "Expected 409 Conflict for user already exists"
 
 
-def test_create_user_raises_500(client):
+def test_create_user_raises_500(client: testclient) -> None:
     user_data = {
         "username": user_example["username"],
         "email": user_example["email"],

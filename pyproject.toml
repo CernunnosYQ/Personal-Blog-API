@@ -1,0 +1,11 @@
+[tool.isort]
+profile = "black"
+skip = ["alembic"]
+
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    alembic
+)/
+'''

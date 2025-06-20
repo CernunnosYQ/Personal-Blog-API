@@ -1,5 +1,6 @@
-from pydantic import BaseModel, model_validator, constr, ConfigDict
-from typing import Optional, Annotated
+from typing import Annotated, Optional
+
+from pydantic import BaseModel, ConfigDict, constr, model_validator
 
 from app.core.enums import UserRoles
 
@@ -41,7 +42,7 @@ class UserCreate(BaseModel):
     is_active: bool = True
 
     @model_validator(mode="after")
-    def validate_passwords(self):
+    def validate_passwords(self) -> "UserCreate":
         if self.password != self.password2:
             raise ValueError("Passwords do not match")
         return self
@@ -69,6 +70,7 @@ class UserPasswordUpdate(BaseModel):
     old_password: str
 
     @model_validator(mode="after")
-    def validate_passwords(self):
+    def validate_passwords(self) -> "UserPasswordUpdate":
         if self.new_password != self.new_password2:
             raise ValueError("Passwords do not match")
+        return self

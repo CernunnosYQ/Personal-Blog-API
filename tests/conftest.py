@@ -1,19 +1,20 @@
+import os
+import sys
 from typing import Any, Generator
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-
-import sys, os
+from sqlalchemy.orm import Session, sessionmaker
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from app.api import router_blog, router_project, router_tag, router_user
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
-from app.api import router_user, router_tag, router_blog, router_project
-from app.core.config import settings
+from app.models import User
 
 
 def start_application() -> FastAPI:
@@ -64,7 +65,7 @@ def client(app: FastAPI, db_session: Session) -> Generator[TestClient, Any, None
     Create a TestClient for the FastAPI app.
     """
 
-    def get_test_db():
+    def get_test_db() -> Generator[Session, Any, None]:
         try:
             yield db_session
         finally:
@@ -76,7 +77,7 @@ def client(app: FastAPI, db_session: Session) -> Generator[TestClient, Any, None
 
 
 @pytest.fixture(scope="function")
-def test_user(db_session):
+def test_user(db_session: Session) -> User:
     user_data = {
         "username": "testuser",
         "email": "test@gmail.com",

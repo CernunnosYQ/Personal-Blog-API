@@ -1,10 +1,12 @@
-import pytest
-
-from fastapi import status
 from unittest.mock import patch
 
+from fastapi import status
+from fastapi.testclient import TestClient
 
-def test_user_delete_success(client, test_user):
+from app.models import User
+
+
+def test_user_delete_success(client: TestClient, test_user: User) -> None:
     """Test deleting a user successfully."""
 
     user_id = test_user.id
@@ -25,7 +27,7 @@ def test_user_delete_success(client, test_user):
     ), "Expected 404 for deleted user"
 
 
-def test_user_delete_not_found(client):
+def test_user_delete_not_found(client: TestClient) -> None:
     """Test deleting a user that does not exist."""
 
     response = client.delete("/api/delete/user/9999")
@@ -34,7 +36,7 @@ def test_user_delete_not_found(client):
     ), "Expected 404 for non-existent user"
 
 
-def test_delete_user_raises_500(client, test_user):
+def test_delete_user_raises_500(client: TestClient, test_user: User) -> None:
     """Test that an unexpected error raises a 500 status code."""
 
     user_id = test_user.id

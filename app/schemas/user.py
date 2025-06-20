@@ -3,6 +3,7 @@ from typing import Annotated, Optional
 from pydantic import BaseModel, ConfigDict, constr, model_validator
 
 from app.core.enums import UserRoles
+from app.utils.hashing import hash_password
 
 
 class UserBase(BaseModel):
@@ -45,6 +46,8 @@ class UserCreate(BaseModel):
     def validate_passwords(self) -> "UserCreate":
         if self.password != self.password2:
             raise ValueError("Passwords do not match")
+
+        self.password = hash_password(self.password)
         return self
 
 

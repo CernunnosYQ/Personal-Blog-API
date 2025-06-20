@@ -1,13 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import JWTError
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models import User
 from app.schemas import ResponseBase
-from app.utils.jwt import create_access_token, create_refresh_token
+from app.utils.jwt import (
+    create_access_token,
+    create_refresh_token,
+    decode_expired_token,
+    verify_access_token,
+)
 
 router_auth = APIRouter(tags=["auth"])
 
@@ -28,7 +34,7 @@ def login_user(
         db.query(User)
         .filter(
             and_(
-                User.is_active is True,
+                User.is_active == True,  # noqa: E712
                 or_(
                     User.username == form_data.username,
                     User.email == form_data.username,
@@ -48,9 +54,9 @@ def login_user(
     user_agent = request.headers.get("user-agent")
 
     refresh_token = create_refresh_token(
-        data={"sub": user.id, "ip": client_ip, "user_agent": user_agent}
+        data={"sub": str(user.id), "ip": client_ip, "user_agent": user_agent}
     )
-    access_token = create_access_token(data={"sub": user.id})
+    access_token = create_access_token(data={"sub": str(user.id)})
 
     response = JSONResponse(
         content={"success": True, "data": None, "message": "Login successful"}
@@ -60,6 +66,7 @@ def login_user(
         value=refresh_token,
         httponly=True,
         secure=True,
+        path="/",
         samesite="strict",
     )
     response.set_cookie(
@@ -67,6 +74,7 @@ def login_user(
         value=access_token,
         httponly=True,
         secure=True,
+        path="/",
         samesite="strict",
     )
 
@@ -76,10 +84,68 @@ def login_user(
 @router_auth.post(
     "/refresh", status_code=status.HTTP_200_OK, response_model=ResponseBase[None]
 )
-def refresh_token(user_data: dict, db: Session = Depends(get_db)) -> dict:
+def refresh_token(request: Request, db: Session = Depends(get_db)) -> dict:
     """Refresh user token"""
 
-    return {"success": True, "data": {}}
+    refresh_token = request.cookies.get("refresh_token")
+    access_token = request.cookies.get("access_token")
+
+    if not refresh_token or not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token is missing. Please login again.",
+        )
+
+    try:
+        refresh_token_payload = verify_access_token(refresh_token)
+        access_token_payload = decode_expired_token(access_token)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    if refresh_token_payload.get("ip") != request.client.host:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="IP address mismatch. Please login again.",
+        )
+
+    if refresh_token_payload.get("user_agent") != request.headers.get("user-agent"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User agent mismatch. Please login again.",
+        )
+
+    sub = refresh_token_payload.get("sub")
+    if not sub or access_token_payload.get("sub") != sub:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User ID mismatch. Please login again.",
+        )
+
+    new_access_token = create_access_token(
+        data={"sub": access_token_payload.get("sub")}
+    )
+
+    response = JSONResponse(
+        content={
+            "success": True,
+            "data": None,
+            "message": "Token refreshed successfully",
+        }
+    )
+
+    response.set_cookie(
+        key="access_token",
+        value=new_access_token,
+        httponly=True,
+        secure=True,
+        path="/",
+        samesite="strict",
+    )
+
+    return response
 
 
 @router_auth.post(
@@ -90,4 +156,9 @@ def refresh_token(user_data: dict, db: Session = Depends(get_db)) -> dict:
 def logout_user(db: Session = Depends(get_db)) -> dict:
     """Logout a user"""
 
-    return {"success": True, "data": None}
+    response = JSONResponse(
+        content={"success": True, "data": None, "message": "Logout successful"}
+    )
+    response.delete_cookie("refresh_token", path="/")
+    response.delete_cookie("access_token", path="/")
+    return response

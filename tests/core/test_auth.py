@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -69,3 +71,50 @@ def test_login_success(client: TestClient, test_user: User) -> None:
     assert response.json()["success"] is True
     assert "refresh_token" in response.cookies
     assert "access_token" in response.cookies
+
+
+def test_logout_success(client: TestClient, test_user: User) -> None:
+    """Test de logout exitoso."""
+    response = client.post(
+        "/api/login",
+        data={"username": test_user.username, "password": "SecurePassword123"},
+        headers={"user-agent": "test-agent"},
+    )
+    assert response.status_code == 200
+
+    response = client.post("/api/logout")
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    assert "refresh_token" not in response.cookies
+    assert "access_token" not in response.cookies
+
+
+def test_refresh_token_success(client: TestClient, test_user: User) -> None:
+    """Test de refresh token exitoso."""
+    response = client.post(
+        "/api/login",
+        data={"username": test_user.username, "password": "SecurePassword123"},
+        headers={"user-agent": "test-agent"},
+    )
+    assert response.status_code == 200
+
+    refresh_token = response.cookies.get("refresh_token")
+    client.cookies.set("refresh_token", refresh_token)
+
+    access_token = response.cookies.get("access_token")
+    client.cookies.set("access_token", access_token)
+
+    time.sleep(1)
+
+    response = client.post(
+        "/api/refresh",
+        headers={"user-agent": "test-agent"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    assert "access_token" in response.cookies
+    assert (
+        response.cookies["access_token"] != access_token
+    ), "Access token should be refreshed"

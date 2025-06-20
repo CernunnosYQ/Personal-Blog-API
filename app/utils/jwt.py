@@ -29,3 +29,15 @@ def verify_access_token(token: str) -> dict:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except jwt.JWTError:
         raise ValueError("Invalid or expired token")
+
+
+def decode_expired_token(token: str) -> dict:
+    try:
+        return jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+            options={"verify_exp": False},
+        )
+    except Exception as e:
+        raise ValueError(f"Token decoding failed: {str(e)}") from e

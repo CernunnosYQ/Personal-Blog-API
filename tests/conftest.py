@@ -10,19 +10,21 @@ from sqlalchemy.orm import Session, sessionmaker
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.api import router_blog, router_project, router_tag, router_user
+from app.api import router_auth, router_blog, router_project, router_tag, router_user
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.models import User
+from app.utils.hashing import hash_password
 
 
 def start_application() -> FastAPI:
     app = FastAPI()
-    app.include_router(router_user, prefix="/api")
-    app.include_router(router_tag, prefix="/api")
+    app.include_router(router_auth, prefix="/api")
     app.include_router(router_blog, prefix="/api")
     app.include_router(router_project, prefix="/api")
+    app.include_router(router_tag, prefix="/api")
+    app.include_router(router_user, prefix="/api")
     return app
 
 
@@ -81,7 +83,7 @@ def test_user(db_session: Session) -> User:
     user_data = {
         "username": "testuser",
         "email": "test@gmail.com",
-        "password": "SecurePassword123",
+        "password": hash_password("SecurePassword123"),
         "is_active": True,
     }
 

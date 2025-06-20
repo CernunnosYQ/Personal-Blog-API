@@ -1,4 +1,5 @@
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
@@ -26,11 +27,9 @@ def test_get_current_user(db_session: Session, test_user: User) -> None:
     token = create_access_token({"user_id": test_user.id})
     current_user = get_current_user(token=token, db=db_session)
 
+    assert current_user.id == test_user.id, "Current user ID should match test user"
     assert (
-        current_user.get("id") == test_user.id
-    ), "Current user ID should match test user"
-    assert (
-        current_user.get("username") == test_user.username
+        current_user.username == test_user.username
     ), "Current user username should match test user"
 
 
@@ -55,3 +54,18 @@ def test_verify_access_token_invalid() -> None:
 
     with pytest.raises(ValueError, match="Invalid or expired token"):
         verify_access_token(invalid_token)
+
+
+def test_login_success(client: TestClient, test_user: User) -> None:
+    """Test de login exitoso con usuario de prueba."""
+
+    response = client.post(
+        "/api/login",
+        data={"username": test_user.username, "password": "SecurePassword123"},
+        headers={"user-agent": "test-agent"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    assert "refresh_token" in response.cookies
+    assert "access_token" in response.cookies

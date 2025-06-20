@@ -13,7 +13,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-) -> dict:
+) -> UserShow:
     try:
         payload = verify_access_token(token)
         user_id = payload.get("user_id")

@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 
 from app.core.enums import UserRoles
 from app.db.base import Base
+from app.utils.hashing import verify_password
 
 
 class User(Base):
@@ -21,3 +22,7 @@ class User(Base):
     projects = relationship(
         "Project", back_populates="author", cascade="all, delete-orphan"
     )
+
+    def verify_password(self, password: str) -> bool:
+        """Verify the user's password."""
+        return verify_password(password, self.password)

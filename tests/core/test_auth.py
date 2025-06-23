@@ -4,9 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_user
+from app.core.auth import get_current_user
+from app.core.jwt import create_access_token, create_refresh_token, verify_access_token
 from app.models import User
-from app.utils.jwt import create_access_token, create_refresh_token, verify_access_token
 
 
 def test_create_access_token() -> None:

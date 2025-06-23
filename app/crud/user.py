@@ -1,3 +1,4 @@
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, NotFoundError
@@ -5,15 +6,33 @@ from app.models import User
 
 
 def crud_get_user(
-    db: Session, id: int | None = None, username: str | None = None
+    db: Session,
+    id: int | None = None,
+    username: str | None = None,
+    only_active: bool = True,
 ) -> User:
     """Fetch a single user by ID or username."""
 
     if id is not None:
+        if only_active:
+            return db.query(User).filter_by(id=id, is_active=True).first()
         return db.query(User).filter_by(id=id).first()
     if username is not None:
+        if only_active:
+            return (
+                db.query(User)
+                .filter(
+                    and_(
+                        User.is_active == True,  # noqa: E712
+                        or_(
+                            User.username == username,
+                            User.email == username,
+                        ),
+                    ),
+                )
+                .first()
+            )
         return db.query(User).filter_by(username=username).first()
-
     raise ValueError("Either id or username must be provided.")
 
 

@@ -2,8 +2,8 @@ from sqlalchemy import Boolean, Column, Enum, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.core.enums import UserRoles
+from app.core.password import verify_password
 from app.db.base import Base
-from app.utils.hashing import verify_password
 
 
 class User(Base):

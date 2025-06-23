@@ -12,10 +12,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.api import router_auth, router_blog, router_project, router_tag, router_user
 from app.core.config import settings
+from app.core.password import hash_password
 from app.db.base import Base
 from app.db.session import get_db
 from app.models import User
-from app.utils.hashing import hash_password
 
 
 def start_application() -> FastAPI:

@@ -3,7 +3,7 @@ from typing import Annotated, Optional
 from pydantic import BaseModel, ConfigDict, constr, model_validator
 
 from app.core.enums import UserRoles
-from app.utils.hashing import hash_password
+from app.core.password import hash_password
 
 
 class UserBase(BaseModel):

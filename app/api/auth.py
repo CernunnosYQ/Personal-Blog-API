@@ -2,18 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError
-from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
-from app.models import User
-from app.schemas import ResponseBase
-from app.utils.jwt import (
+from app.core.auth import set_secure_cookie, validate_refresh_token
+from app.core.jwt import (
     create_access_token,
     create_refresh_token,
     decode_expired_token,
     verify_access_token,
 )
+from app.crud import crud_get_user
+from app.db.session import get_db
+from app.schemas import ResponseBase
 
 router_auth = APIRouter(tags=["auth"])
 
@@ -30,18 +30,10 @@ def login_user(
 ) -> dict:
     """Login a user  and create new access and refresh tokens as secure cookies"""
 
-    user = (
-        db.query(User)
-        .filter(
-            and_(
-                User.is_active == True,  # noqa: E712
-                or_(
-                    User.username == form_data.username,
-                    User.email == form_data.username,
-                ),
-            )
-        )
-        .first()
+    user = crud_get_user(
+        db=db,
+        username=form_data.username,
+        only_active=True,
     )
 
     if not user or not user.verify_password(form_data.password):
@@ -61,22 +53,9 @@ def login_user(
     response = JSONResponse(
         content={"success": True, "data": None, "message": "Login successful"}
     )
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=True,
-        path="/",
-        samesite="strict",
-    )
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=True,
-        path="/",
-        samesite="strict",
-    )
+
+    response = set_secure_cookie(response, name="refresh_token", value=refresh_token)
+    response = set_secure_cookie(response, name="access_token", value=access_token)
 
     return response
 
@@ -105,24 +84,7 @@ def refresh_token(request: Request, db: Session = Depends(get_db)) -> dict:
             detail="Invalid or expired token",
         )
 
-    if refresh_token_payload.get("ip") != request.client.host:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="IP address mismatch. Please login again.",
-        )
-
-    if refresh_token_payload.get("user_agent") != request.headers.get("user-agent"):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User agent mismatch. Please login again.",
-        )
-
-    sub = refresh_token_payload.get("sub")
-    if not sub or access_token_payload.get("sub") != sub:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User ID mismatch. Please login again.",
-        )
+    validate_refresh_token(refresh_token_payload, access_token_payload, request)
 
     new_access_token = create_access_token(
         data={"sub": access_token_payload.get("sub")}
@@ -136,14 +98,7 @@ def refresh_token(request: Request, db: Session = Depends(get_db)) -> dict:
         }
     )
 
-    response.set_cookie(
-        key="access_token",
-        value=new_access_token,
-        httponly=True,
-        secure=True,
-        path="/",
-        samesite="strict",
-    )
+    response = set_secure_cookie(response, name="access_token", value=new_access_token)
 
     return response
 
@@ -154,7 +109,7 @@ def refresh_token(request: Request, db: Session = Depends(get_db)) -> dict:
     response_model=ResponseBase[None],
 )
 def logout_user(db: Session = Depends(get_db)) -> dict:
-    """Logout a user"""
+    """Logout a user by clearing cookies"""
 
     response = JSONResponse(
         content={"success": True, "data": None, "message": "Logout successful"}

@@ -11,16 +11,17 @@ def create_token(data: dict, expires_delta: timedelta) -> str:
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def create_access_token(data: dict) -> str:
+def create_access_token(sub: str) -> str:
     return create_token(
-        data,
+        {"sub": sub},
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
 
-def create_refresh_token(data: dict) -> str:
+def create_refresh_token(sub: str, fingerprint: str) -> str:
     return create_token(
-        data, expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        {"sub": sub, "fingerprint": fingerprint},
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
 
 

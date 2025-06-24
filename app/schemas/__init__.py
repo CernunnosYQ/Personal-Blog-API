@@ -1,3 +1,4 @@
+from .auth import Token
 from .blogpost import BlogpostBase, BlogpostCreate, BlogpostShow, BlogpostUpdate
 from .project import ProjectBase, ProjectCreate, ProjectShow, ProjectUpdate
 from .response import ResponseBase

@@ -21,6 +21,7 @@ class UserShow(BaseModel):
     id: int
     username: str
     email: str
+    role: UserRoles
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)

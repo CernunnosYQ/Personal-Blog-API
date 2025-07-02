@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
 
+from app.core.auth import get_current_user
 from app.core.exceptions import ConflictError, NotFoundError
 from app.crud import (
     crud_create_user,
@@ -68,13 +69,24 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)) -> dict:
 
 
 @router_user.put("/update/user/{id}", response_model=ResponseBase[UserShow])
-async def update_user(id: int, user: UserUpdate, db: Session = Depends(get_db)) -> dict:
+async def update_user(
+    id: int,
+    new_data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserShow = Depends(get_current_user),
+) -> dict:
     """Update an existing user"""
 
-    user = user.model_dump(exclude_unset=True)
+    if current_user.id != id and not current_user.role.is_admin():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update this user",
+        )
+
+    user_data = new_data.model_dump(exclude_unset=True)
 
     try:
-        updated_user = crud_update_user(id=id, user_data=user, db=db)
+        updated_user = crud_update_user(id=id, user_data=user_data, db=db)
     except NotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -123,8 +135,18 @@ async def update_password(
     "/delete/user/{id}",
     status_code=status.HTTP_200_OK,
 )
-async def delete_user(id: int, db: Session = Depends(get_db)) -> dict:
+async def delete_user(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: UserShow = Depends(get_current_user),
+) -> dict:
     """Delete a user"""
+
+    if current_user.id != id and not current_user.role.is_admin():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete this user",
+        )
 
     try:
         response = crud_delete_user(id=id, db=db)

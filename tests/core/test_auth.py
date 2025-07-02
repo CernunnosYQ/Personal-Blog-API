@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
 from app.core.jwt import create_access_token, create_refresh_token, verify_access_token
-from app.models import User
+from tests.utils.schemas import UserExtended
 
 
 def test_create_access_token() -> None:
@@ -21,20 +21,10 @@ def test_create_access_token() -> None:
     assert decoded_data["sub"] == sub, "Decoded token data should match input data"
 
 
-def test_get_current_user(
-    client: TestClient, db_session: Session, test_user: User
-) -> None:
+def test_get_current_user(db_session: Session, test_user: UserExtended) -> None:
     """Test getting the current user from a valid token."""
 
-    response = client.post(
-        "/api/login",
-        data={"username": test_user.username, "password": "SecurePassword123"},
-        headers={"user-agent": "test-agent"},
-    )
-    assert response.status_code == 200, "Login should be successful"
-    access_token = response.json()["data"].get("access_token")
-
-    current_user = get_current_user(token=access_token, db=db_session)
+    current_user = get_current_user(token=test_user.access_token, db=db_session)
     assert current_user is not None, "Current user should not be None"
 
     assert current_user.id == test_user.id, "Current user ID should match test user"
@@ -68,13 +58,13 @@ def test_verify_access_token_invalid() -> None:
         verify_access_token(invalid_token)
 
 
-def test_login_success(client: TestClient, test_user: User) -> None:
+def test_login_success(client: TestClient, test_user: UserExtended) -> None:
     """Test de login exitoso con usuario de prueba."""
 
     response = client.post(
         "/api/login",
         data={"username": test_user.username, "password": "SecurePassword123"},
-        headers={"user-agent": "test-agent"},
+        headers={"x-Device-Fingerprint": "fingerprint123"},
     )
 
     access_token = response.json()["data"].get("access_token")
@@ -82,13 +72,14 @@ def test_login_success(client: TestClient, test_user: User) -> None:
     assert response.status_code == 200
     assert isinstance(verify_access_token(access_token), dict)
     assert "refresh_token" in response.cookies
+    verify_access_token(response.cookies.get("refresh_token"))
 
 
-def test_logout_success(client: TestClient, test_user: User) -> None:
+def test_logout_success(client: TestClient, test_user: UserExtended) -> None:
     """Test de logout exitoso."""
     response = client.post(
         "/api/login",
-        data={"username": test_user.username, "password": "SecurePassword123"},
+        data={"username": test_user.username, "password": test_user.unhashed_password},
         headers={"user-agent": "test-agent"},
     )
     assert response.status_code == 200
@@ -98,10 +89,9 @@ def test_logout_success(client: TestClient, test_user: User) -> None:
     assert response.status_code == 200
     assert response.json()["success"] is True
     assert "refresh_token" not in response.cookies
-    assert "access_token" not in response.cookies
 
 
-def test_refresh_token_success(client: TestClient, test_user: User) -> None:
+def test_refresh_token_success(client: TestClient, test_user: UserExtended) -> None:
     """Test de refresh token exitoso."""
     device_fingerprint = "3f1c838b9f6a05f4b482e8f3a6a4a243"
 

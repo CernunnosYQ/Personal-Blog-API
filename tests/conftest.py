@@ -12,10 +12,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.api import router_auth, router_blog, router_project, router_tag, router_user
 from app.core.config import settings
+from app.core.enums import UserRoles
+from app.core.jwt import create_access_token
 from app.core.password import hash_password
 from app.db.base import Base
 from app.db.session import get_db
-from app.models import User
+from tests.utils.schemas import UserExtended
 
 
 def start_application() -> FastAPI:
@@ -79,15 +81,36 @@ def client(app: FastAPI, db_session: Session) -> Generator[TestClient, Any, None
 
 
 @pytest.fixture(scope="function")
-def test_user(db_session: Session) -> User:
+def test_user(db_session: Session) -> UserExtended:
     user_data = {
         "username": "testuser",
         "email": "test@gmail.com",
         "password": hash_password("SecurePassword123"),
+        "role": UserRoles.USER,
         "is_active": True,
     }
 
     from app.crud import crud_create_user
 
-    user = crud_create_user(user_data, db=db_session)
-    return user
+    user = crud_create_user(user_data, db=db_session).__dict__
+    user["unhashed_password"] = "SecurePassword123"
+    user["access_token"] = create_access_token(sub=str(user["id"]))
+    return UserExtended(**user)
+
+
+@pytest.fixture(scope="function")
+def test_admin(db_session: Session) -> UserExtended:
+    user_data = {
+        "username": "testadmin",
+        "email": "admin@gmail.com",
+        "password": hash_password("SecurePassword123"),
+        "role": UserRoles.ADMIN,
+        "is_active": True,
+    }
+
+    from app.crud import crud_create_user
+
+    user = crud_create_user(user_data, db=db_session).__dict__
+    user["unhashed_password"] = "SecurePassword123"
+    user["access_token"] = create_access_token(sub=str(user["id"]))
+    return UserExtended(**user)

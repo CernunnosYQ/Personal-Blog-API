@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.crud import crud_get_user
-from app.models import User
+from tests.utils.schemas import UserExtended
 
 
 def test_crud_get_user_raises_value_error_if_not_user_or_id(
@@ -16,7 +16,7 @@ def test_crud_get_user_raises_value_error_if_not_user_or_id(
         crud_get_user(db=db_session)
 
 
-def test_get_user_success(client: TestClient, test_user: User) -> None:
+def test_get_user_success(client: TestClient, test_user: UserExtended) -> None:
     """Test retrieving a user by username and ID."""
 
     username = test_user.username

@@ -2,6 +2,8 @@ from unittest.mock import patch
 
 from fastapi import status, testclient
 
+from tests.utils.schemas import UserExtended
+
 user_example = {
     "username": "testuser",
     "email": "test@gmail.com",
@@ -59,16 +61,16 @@ def test_create_user_password_missmatch(client: testclient) -> None:
     ), "Expected validation error for password mismatch"
 
 
-def test_create_user_already_exists(client: testclient) -> None:
+def test_create_user_already_exists(
+    client: testclient, test_user: UserExtended
+) -> None:
     user_data = {
-        "username": user_example["username"],
-        "email": user_example["email"],
-        "password": user_example["secure_password"],
-        "password2": user_example["secure_password"],
-        "is_active": user_example["is_active"],
+        "username": test_user.username,
+        "email": test_user.email,
+        "password": test_user.unhashed_password,
+        "password2": test_user.unhashed_password,
+        "is_active": test_user.is_active,
     }
-
-    client.post("/api/create/user/", json=user_data)
 
     response = client.post("/api/create/user/", json=user_data)
     assert response.status_code == 409, "Expected 409 Conflict for user already exists"
